@@ -1,33 +1,33 @@
-import { useState, useRef } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Upload } from "lucide-react"
+import { useState, useRef } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Upload } from "lucide-react";
 
 const UploadFile = () => {
-  const [file, setFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0])
+      setFile(event.target.files[0]);
     }
-  }
+  };
 
   const handleButtonClick = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-  }
+    event.preventDefault();
+  };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
+    event.preventDefault();
     if (event.dataTransfer.files && event.dataTransfer.files[0]) {
-      setFile(event.dataTransfer.files[0])
+      setFile(event.dataTransfer.files[0]);
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -65,7 +65,7 @@ const UploadFile = () => {
         Upload File
       </Button>
     </div>
-  )
-}
+  );
+};
 
-export default UploadFile
+export default UploadFile;

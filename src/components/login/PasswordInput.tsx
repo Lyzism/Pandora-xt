@@ -1,20 +1,19 @@
-// src/components/PasswordInput.tsx
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { EyeIcon, EyeOffIcon } from "lucide-react"
 
 interface PasswordInputProps {
   password: string;
-  setPassword: (password: string) => void;
+  setPassword: (password: string) => void
 }
 
 const PasswordInput: React.FC<PasswordInputProps> = ({ password, setPassword }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
-  };
+    setShowPassword((prev) => !prev)
+  }
 
   return (
     <div className="relative">
@@ -43,7 +42,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({ password, setPassword }) 
         </span>
       </Button>
     </div>
-  );
-};
+  )
+}
 
 export default PasswordInput;

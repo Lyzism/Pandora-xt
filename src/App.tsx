@@ -1,10 +1,10 @@
-import React from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/login.tsx'
-import Dashboard from './pages/dashboard.tsx'
-import NotFound from './pages/404.tsx'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/login.tsx';
+import Dashboard from './pages/dashboard.tsx';
+import NotFound from './pages/404.tsx';
 
-const App: React.FC = () => {
+const App: React.FC = (): JSX.Element => {
   return (
     <Router>
       <Routes>
@@ -17,4 +17,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App
+export default App;

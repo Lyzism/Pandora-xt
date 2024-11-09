@@ -1,4 +1,3 @@
-// src/utils/keyboardHandlers.ts
 import React from "react";
 
 export const handleEnterKey = (
@@ -6,7 +5,7 @@ export const handleEnterKey = (
   action: () => void
 ) => {
   if (e.key === "Enter") {
-    e.preventDefault(); // Prevent form submission on Enter
-    action(); // Execute the provided action
+    e.preventDefault();
+    action();
   }
 };

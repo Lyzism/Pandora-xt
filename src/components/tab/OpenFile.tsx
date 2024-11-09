@@ -1,64 +1,64 @@
-import { useState, useRef } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { FolderOpen } from "lucide-react"
+import { useState, useRef } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FolderOpen } from "lucide-react";
 
 const OpenFile = () => {
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
-  const [isDragOver, setIsDragOver] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0])
-      setPreview(null)
+      setFile(event.target.files[0]);
+      setPreview(null);
     }
-  }
+  };
 
   const handleButtonClick = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
   const handleOpenFile = () => {
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
-        const content = e.target?.result
+        const content = e.target?.result;
         if (typeof content === 'string') {
           if (file.type.startsWith('image/')) {
-            setPreview(content)
+            setPreview(content);
           } else {
-            setPreview(content.slice(0, 1000))
+            setPreview(content.slice(0, 1000));
           }
         }
-      }
+      };
       if (file.type.startsWith('image/')) {
-        reader.readAsDataURL(file)
+        reader.readAsDataURL(file);
       } else {
-        reader.readAsText(file)
+        reader.readAsText(file);
       }
     }
-  }
+  };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    setIsDragOver(true)
-  }
+    event.preventDefault();
+    setIsDragOver(true);
+  };
 
   const handleDragLeave = () => {
-    setIsDragOver(false)
-  }
+    setIsDragOver(false);
+  };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault()
-    setIsDragOver(false)
+    event.preventDefault();
+    setIsDragOver(false);
     if (event.dataTransfer.files && event.dataTransfer.files[0]) {
-      setFile(event.dataTransfer.files[0])
-      setPreview(null)
+      setFile(event.dataTransfer.files[0]);
+      setPreview(null);
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -107,7 +107,7 @@ const OpenFile = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default OpenFile
+export default OpenFile;

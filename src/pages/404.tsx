@@ -1,14 +1,14 @@
-import React from 'react'
-import { Button } from "@/components/ui/button"
-import { HomeIcon } from "lucide-react"
-import { useNavigate } from 'react-router-dom'
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { HomeIcon } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
 const NotFound: React.FC = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleGoHome = () => {
-    navigate('/login')
-  }
+    navigate('/login');
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
@@ -22,7 +22,7 @@ const NotFound: React.FC = () => {
         Return to Home
       </Button>
     </div>
-  )
-}
+  );
+};
 
-export default NotFound
+export default NotFound;

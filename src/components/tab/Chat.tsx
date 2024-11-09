@@ -1,18 +1,18 @@
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Send } from "lucide-react"
+import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Send } from "lucide-react";
 
 const Chat = () => {
-  const [chatMessages, setChatMessages] = useState<string[]>([])
-  const [inputMessage, setInputMessage] = useState('')
+  const [chatMessages, setChatMessages] = useState<string[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
 
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
-      setChatMessages([...chatMessages, inputMessage])
-      setInputMessage('')
+      setChatMessages([...chatMessages, inputMessage]);
+      setInputMessage('');
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -36,7 +36,7 @@ const Chat = () => {
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Chat
+export default Chat;

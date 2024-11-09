@@ -1,8 +1,8 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Settings from '../components/tab/Settings'
-import Chat from '../components/tab/Chat'
-import OpenFile from '../components/tab/OpenFile'
-import UploadFile from '../components/tab/UploadFile'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Settings from "@/components/tab/Settings";
+import Chat from '@/components/tab/Chat';
+import OpenFile from '@/components/tab/OpenFile';
+import UploadFile from '@/components/tab/UploadFile';
 
 const Dashboard: React.FC = () => {
   return (
@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

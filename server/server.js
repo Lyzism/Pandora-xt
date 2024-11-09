@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken'); // Tambahkan ini
 
 const app = express();
 const port = 3001;
-const jwtSecret = 'your-secret-key'; // Gantilah dengan kunci rahasia yang aman
+const jwtSecret = 'j@F9$kL2#qW8%tR1!mN3^zX4&bV7*eY6';
 
 app.use(cors());
 app.use(express.json());

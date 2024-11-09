@@ -1,4 +1,3 @@
-// src/components/LoginAlert.tsx
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface LoginAlertProps {
