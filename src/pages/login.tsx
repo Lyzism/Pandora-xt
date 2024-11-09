@@ -1,30 +1,23 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { EyeIcon, EyeOffIcon } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import '../index.css'
+// src/pages/Login.tsx
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import LoginAlert from "@/components/login/LoginAlert";
+import PasswordInput from "@/components/login/PasswordInput";
+import { loginApi } from "@/service/authService";
+import { handleEnterKey } from "@/utils/keyboardHandlers";
 
 const Login: React.FC = () => {
-  const [showPassword, setShowPassword] = useState(false)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [showAlert, setShowAlert] = useState(false)
-  const [alertMessage, setAlertMessage] = useState('')
-  const navigate = useNavigate()
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const navigate = useNavigate();
 
-  const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev)
-  }
-
-  const handleLogin = () => {
-    // Dummy credentials
-    const dummyUsername = "user123"
-    const dummyPassword = "password123"
-
+  const handleLogin = async () => {
     if (!username || !password) {
       setAlertMessage("Please enter username or password. Please try again.");
       setShowAlert(true);
@@ -32,15 +25,18 @@ const Login: React.FC = () => {
       return;
     }
 
-    // Check credentials
-    if (username === dummyUsername && password === dummyPassword) {
-      navigate('/dashboard')
-    } else {
-      setAlertMessage("Invalid username or password. Please try again.");
+    try {
+      const data = await loginApi(username, password);
+      const token = data.token;
+      sessionStorage.setItem('token', token);
+      navigate('/dashboard');
+    } catch (error) {
+      const errorMessage = (error as Error).message || "Server error. Please try again later.";
+      setAlertMessage(errorMessage);
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 10000);
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white-100 relative">
@@ -50,47 +46,22 @@ const Login: React.FC = () => {
           <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onKeyDown={(e) => handleEnterKey(e, handleLogin)}>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
-                <Input 
-                  id="username" 
-                  type="text" 
-                  placeholder="Enter your username" 
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Enter your username"
                   required
-                  value={username} 
+                  value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    required
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                    onClick={togglePasswordVisibility}
-                  >
-                    {showPassword ? (
-                      <EyeOffIcon className="h-4 w-4" />
-                    ) : (
-                      <EyeIcon className="h-4 w-4" />
-                    )}
-                    <span className="sr-only">
-                      {showPassword ? "Hide password" : "Show password"}
-                    </span>
-                  </Button>
-                </div>
+                <PasswordInput password={password} setPassword={setPassword} />
               </div>
             </div>
           </form>
@@ -99,16 +70,9 @@ const Login: React.FC = () => {
           <Button className="w-full" onClick={handleLogin}>Log in</Button>
         </CardFooter>
       </Card>
-      {showAlert && (
-        <Alert className="fixed bottom-4 right-4 w-80 animate-in slide-in-from-right rounded shadow-md">
-          <AlertTitle>{alertMessage.includes("Invalid") ? "Login Failed" : "Input Required"}</AlertTitle>
-          <AlertDescription>
-            {alertMessage}
-          </AlertDescription>
-        </Alert>
-      )}
+      <LoginAlert showAlert={showAlert} alertMessage={alertMessage} />
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

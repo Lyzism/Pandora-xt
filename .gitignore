@@ -1,2 +1,5 @@
 # Dependency directories
 node_modules/
+
+#Users maker
+hash_password.js
