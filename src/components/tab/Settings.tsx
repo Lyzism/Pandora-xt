@@ -25,7 +25,7 @@ const Settings = () => {
       </div>
       <div className="space-y-2">
         <Label htmlFor="transparency">Transparency</Label>
-        <Slider defaultValue={[33]} max={100} step={1} className="mt-2" />
+        <Slider defaultValue={[100]} max={100} step={1} className="mt-2" />
       </div>
       <Button className="w-full">Save Settings</Button>
     </div>

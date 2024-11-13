@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import LoginAlert from "@/components/login/LoginAlert";
+import AlertMessage from "@/components/Alert/AlertMessage";
 import PasswordInput from "@/components/login/PasswordInput";
 import { loginApi } from "@/service/authService";
 import { handleEnterKey } from "@/utils/keyboardHandlers";
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
           <Button className="w-full" onClick={handleLogin}>Log in</Button>
         </CardFooter>
       </Card>
-      <LoginAlert showAlert={showAlert} alertMessage={alertMessage} />
+      <AlertMessage showAlert={showAlert} alertMessage={alertMessage} />
     </div>
   );
 };
