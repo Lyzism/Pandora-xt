@@ -31,6 +31,7 @@ const OpenFile = () => {
       handleFilePreview(selectedFile);
     }
   };
+
   const handleButtonClick = () => {
     const token = sessionStorage.getItem('token');
     if (!token) {
@@ -42,59 +43,63 @@ const OpenFile = () => {
     fileInputRef.current?.click();
   };
 
-  const handleDocxFile = async (file: File) => {
-    try {
-      const arrayBuffer = await file.arrayBuffer()
-      const result = await mammoth.convertToHtml({ arrayBuffer })
-      if (result.messages.length > 0) {
-        console.warn('Warnings while converting:', result.messages)
-      }
-      setPreview(result.value);
-      setAlertMessage('');
-      setShowAlert(false);
-    } catch (err) {
-      console.error('Error converting .docx file:', err);
-      setAlertMessage('Failed to read Word document. Make sure the .docx file is valid.');
-      setShowAlert(true);
-      setPreview(null);
-    }
-  }
-
   const handleFilePreview = async (file: File) => {
     setAlertMessage('');
     setShowAlert(false);
     
-    if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      await handleDocxFile(file)
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const content = e.target?.result
-      if (typeof content === 'string') {
-        if (file.type.startsWith('image/')) {
-          setPreview(content)
-        } else if (file.type === 'application/pdf') {
-          setPreview(URL.createObjectURL(file))
-        } else {
-          setPreview(content)
-        }
-      }
-    }
-
-    reader.onerror = () => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
       setAlertMessage('Please log in to access the files.');
       setShowAlert(true);
-      setPreview(null);
-    };
+      return;
+    }
 
-    if (file.type.startsWith('image/')) {
-      reader.readAsDataURL(file)
-    } else if (file.type === 'application/pdf') {
-      setPreview(URL.createObjectURL(file))
-    } else {
-      reader.readAsText(file)
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('http://localhost:3001/api/preview', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to preview file');
+      }
+
+      const blob = await response.blob();
+
+      if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        const arrayBuffer = await blob.arrayBuffer();
+        try {
+          const result = await mammoth.convertToHtml({ arrayBuffer });
+          if (result.messages.length > 0) {
+            console.warn('Warnings while converting:', result.messages);
+          }
+          setPreview(result.value);
+        } catch (err) {
+          console.error('Error converting .docx file:', err);
+          setAlertMessage('Failed to read Word document. Make sure the .docx file is valid.');
+          setShowAlert(true);
+          setPreview(null);
+        }
+      } else if (file.type === 'application/pdf') {
+        const decryptedPdfUrl = URL.createObjectURL(blob);
+        setPreview(decryptedPdfUrl);
+      } else if (file.type.startsWith('image/')) {
+        setPreview(URL.createObjectURL(blob));
+      } else {
+        const text = await blob.text();
+        setPreview(text);
+      }
+    } catch (error) {
+      console.error('Error previewing file:', error);
+      setAlertMessage('Failed to preview file. Please try again.');
+      setShowAlert(true);
+      setPreview(null);
     }
   }
 
@@ -183,7 +188,12 @@ const OpenFile = () => {
               file.type.startsWith('image/') ? (
                 <img src={preview} alt="File preview" className="max-w-full h-auto rounded-md" />
               ) : file.type === 'application/pdf' ? (
-                <iframe src={preview} title="PDF preview" className="w-full h-[70vh] border-none rounded-md" />
+                <iframe 
+                  src={preview} 
+                  title="PDF preview" 
+                  className="w-full h-[70vh] border-none rounded-md" 
+                  style={{ backgroundColor: 'white' }}
+                />
               ) : file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? (
                 <div 
                   className="prose prose-sm max-w-full h-[70vh] overflow-auto p-4 bg-white rounded-md [&>*]:w-full [&_p]:w-full [&_h1]:w-full [&_h2]:w-full [&_h3]:w-full"
