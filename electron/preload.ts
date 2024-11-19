@@ -1,5 +1,7 @@
 import { ipcRenderer, contextBridge } from 'electron'
 
+type IpcCallback = (data: unknown) => void;
+
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
@@ -22,3 +24,11 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // You can expose other APTs you need here.
   // ...
 })
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  send: (channel: string, data: unknown) => ipcRenderer.send(channel, data),
+  receive: (channel: string, callback: IpcCallback) => {
+    ipcRenderer.on(channel, (_, data) => callback(data));
+  },
+  invoke: (channel: string, data?: unknown) => ipcRenderer.invoke(channel, data),
+});

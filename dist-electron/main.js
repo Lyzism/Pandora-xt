@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -23,6 +23,14 @@ function createWindow() {
   } else {
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
+  ipcMain.on("set-transparency", (_, transparency) => {
+    if (win) {
+      win.setOpacity(transparency);
+    }
+  });
+  ipcMain.handle("get-app-version", () => {
+    return app.getVersion();
+  });
 }
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

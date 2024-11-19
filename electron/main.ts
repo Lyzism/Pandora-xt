@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 // import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { ipcMain } from 'electron';
 
 // const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -45,6 +46,17 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
+
+  ipcMain.on('set-transparency', (_, transparency: number) => {
+    if (win) {
+      win.setOpacity(transparency);
+    }
+  });
+
+  // Event tambahan, jika diperlukan
+  ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
+  });
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

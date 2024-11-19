@@ -20,3 +20,10 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   // You can expose other APTs you need here.
   // ...
 });
+electron.contextBridge.exposeInMainWorld("electronAPI", {
+  send: (channel, data) => electron.ipcRenderer.send(channel, data),
+  receive: (channel, callback) => {
+    electron.ipcRenderer.on(channel, (_, data) => callback(data));
+  },
+  invoke: (channel, data) => electron.ipcRenderer.invoke(channel, data)
+});
