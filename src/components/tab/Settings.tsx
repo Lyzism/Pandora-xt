@@ -1,19 +1,29 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+import { useTransparencyStore } from "@/stores/useTransparencyStore";
 
 const Settings = () => {
-  const [transparency, setTransparency] = useState(100);
+  const { transparency, setTransparency } = useTransparencyStore();
 
   const handleTransparencyChange = (value: number[]) => {
-    let newTransparency = value[0];
-    if (newTransparency < 1) {
-      newTransparency = 1;
-    }
-    setTransparency(newTransparency);
-    window.electronAPI.send("set-transparency", newTransparency / 100);
+    setTransparency(value[0]);
   };
+
+  useEffect(() => {
+    const updateTransparency = (newTransparency: unknown) => {
+      if (typeof newTransparency === "number") {
+        setTransparency(Math.round(newTransparency));
+      }
+    };
+
+    window.electronAPI.receive("update-transparency", updateTransparency);
+
+    return () => {
+      window.electronAPI.receive("update-transparency", () => {});
+    };
+  }, [setTransparency]);
 
   return (
     <div className="space-y-4">
@@ -38,7 +48,8 @@ const Settings = () => {
       <div className="space-y-2">
         <Label htmlFor="transparency">Transparency ({transparency}%)</Label>
         <Slider
-          defaultValue={[100]}
+          defaultValue={[transparency]}
+          value={[transparency]}
           max={100}
           step={1}
           onValueChange={handleTransparencyChange}

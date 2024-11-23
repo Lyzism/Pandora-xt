@@ -2,11 +2,17 @@ import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, FileIcon, FileText, Image as ImageIcon } from "lucide-react";
+import { Upload, FileIcon, FileText, Image as ImageIcon, X } from "lucide-react";
 import AlertMessage from "@/components/Alert/AlertMessage";
+import { useFileStore } from '@/stores/fileStore'; // Adjust import path as needed
 
 const UploadFile = () => {
-  const [file, setFile] = useState<File | null>(null);
+  const { 
+    uploadedFile, 
+    setUploadedFile, 
+    clearUploadedFile 
+  } = useFileStore();
+
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -20,7 +26,6 @@ const UploadFile = () => {
     return <FileIcon className="w-12 h-12 text-gray-500" />;
   };
 
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const token = sessionStorage.getItem('token');
     if (!token) {
@@ -31,7 +36,7 @@ const UploadFile = () => {
     }
 
     if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0]);
+      setUploadedFile(event.target.files[0]);
     }
   };
 
@@ -45,6 +50,7 @@ const UploadFile = () => {
     }
     fileInputRef.current?.click();
   };
+
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   };
@@ -60,7 +66,7 @@ const UploadFile = () => {
     }
 
     if (event.dataTransfer.files && event.dataTransfer.files[0]) {
-      setFile(event.dataTransfer.files[0]);
+      setUploadedFile(event.dataTransfer.files[0]);
     }
   };
   
@@ -74,9 +80,9 @@ const UploadFile = () => {
       return;
     }
   
-    if (file) {
+    if (uploadedFile) {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', uploadedFile);
   
       try {
         const response = await fetch('http://localhost:3001/api/upload', {
@@ -92,7 +98,7 @@ const UploadFile = () => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = file.name;  // Menggunakan nama asli file
+          link.download = uploadedFile.name;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -108,6 +114,13 @@ const UploadFile = () => {
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 10000);
       }
+    }
+  };
+
+  const handleCancelFile = () => {
+    clearUploadedFile();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -138,25 +151,35 @@ const UploadFile = () => {
           <span className="mt-1 text-xs text-gray-500">SVG, PNG, JPG or GIF (max. 800x400px)</span>
         </Button>
       </div>
-      {file && (
+      {uploadedFile && (
         <div className="mt-4 border rounded-lg overflow-hidden">
-          <div className="bg-muted p-4 flex items-center space-x-4">
-            {getFileIcon(file.type)}
-            <div>
-              <h3 className="text-lg font-semibold">{file.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {file.type || 'Unknown file type'} - {(file.size / 1024).toFixed(2)} KB
-              </p>
+          <div className="bg-muted p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {getFileIcon(uploadedFile.type)}
+              <div>
+                <h3 className="text-lg font-semibold">{uploadedFile.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {uploadedFile.type || 'Unknown file type'} - {(uploadedFile.size / 1024).toFixed(2)} KB
+                </p>
+              </div>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCancelFile}
+              aria-label="Cancel file selection"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       )}
-      <Button className="w-full" disabled={!file} onClick={handleUpload}>
+      <Button className="w-full" disabled={!uploadedFile} onClick={handleUpload}>
         Upload File
       </Button>
       <AlertMessage showAlert={showAlert} alertMessage={alertMessage} />
     </div>
   );
-};
+}
 
 export default UploadFile;

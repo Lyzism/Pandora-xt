@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, globalShortcut, BrowserWindow, ipcMain } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -32,18 +32,41 @@ function createWindow() {
     return app.getVersion();
   });
 }
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
-  }
+app.whenReady().then(() => {
+  createWindow();
+  globalShortcut.register("Ctrl+=", () => {
+    if (win) {
+      const currentOpacity = win.getOpacity();
+      if (currentOpacity < 1) {
+        const newOpacity = Math.min(currentOpacity + 0.1, 1);
+        win.setOpacity(newOpacity);
+        win.webContents.send("update-transparency", newOpacity * 100);
+      }
+    }
+  });
+  globalShortcut.register("Ctrl+-", () => {
+    if (win) {
+      const currentOpacity = win.getOpacity();
+      if (currentOpacity > 0.1) {
+        const newOpacity = Math.max(currentOpacity - 0.1, 0.1);
+        win.setOpacity(newOpacity);
+        win.webContents.send("update-transparency", newOpacity * 100);
+      }
+    }
+  });
 });
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
 });
-app.whenReady().then(createWindow);
+app.on("window-all-closed", () => {
+  globalShortcut.unregisterAll();
+  if (process.platform !== "darwin") {
+    app.quit();
+    win = null;
+  }
+});
 export {
   MAIN_DIST,
   RENDERER_DIST,

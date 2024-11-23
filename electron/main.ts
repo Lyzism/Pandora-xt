@@ -1,8 +1,7 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron';
 // import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { ipcMain } from 'electron';
 
 // const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -59,15 +58,32 @@ function createWindow() {
   });
 }
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-    win = null
-  }
-})
+app.whenReady().then(() => {
+  createWindow();
+
+  // Shortcut global
+  globalShortcut.register('Ctrl+=', () => {
+    if (win) {
+      const currentOpacity = win.getOpacity();
+      if (currentOpacity < 1) {
+        const newOpacity = Math.min(currentOpacity + 0.1, 1);
+        win.setOpacity(newOpacity);
+        win.webContents.send('update-transparency', newOpacity * 100);
+      }
+    }
+  });
+
+  globalShortcut.register('Ctrl+-', () => {
+    if (win) {
+      const currentOpacity = win.getOpacity();
+      if (currentOpacity > 0.1) {
+        const newOpacity = Math.max(currentOpacity - 0.1, 0.1);
+        win.setOpacity(newOpacity);
+        win.webContents.send('update-transparency', newOpacity * 100);
+      }
+    }
+  });
+});
 
 app.on('activate', () => {
   // On OS X it's common to re-create a window in the app when the
@@ -77,4 +93,13 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(createWindow)
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
+app.on('window-all-closed', () => {
+  globalShortcut.unregisterAll();
+  if (process.platform !== 'darwin') {
+    app.quit()
+    win = null
+  }
+})

@@ -2,13 +2,20 @@ import { useState, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FolderOpen, FileText, Image as ImageIcon, FileIcon, File } from "lucide-react"
+import { FolderOpen, FileText, Image as ImageIcon, FileIcon, File, X } from "lucide-react"
 import * as mammoth from 'mammoth/mammoth.browser';
 import AlertMessage from "@/components/Alert/AlertMessage";
+import { useFileStore } from '@/stores/fileStore';
 
 const OpenFile = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const { 
+    previewedFile, 
+    previewedFilePreview, 
+    setPreviewedFile, 
+    setPreviewedFilePreview, 
+    clearPreviewedFile 
+  } = useFileStore();
+
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
@@ -25,7 +32,7 @@ const OpenFile = () => {
 
     if (event.target.files && event.target.files[0]) {
       const selectedFile = event.target.files[0];
-      setFile(selectedFile);
+      setPreviewedFile(selectedFile);
       setAlertMessage('');
       setShowAlert(false);
       handleFilePreview(selectedFile);
@@ -71,6 +78,7 @@ const OpenFile = () => {
       }
 
       const blob = await response.blob();
+      let preview: string | null = null;
 
       if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         const arrayBuffer = await blob.arrayBuffer();
@@ -79,38 +87,37 @@ const OpenFile = () => {
           if (result.messages.length > 0) {
             console.warn('Warnings while converting:', result.messages);
           }
-          setPreview(result.value);
+          preview = result.value;
         } catch (err) {
           console.error('Error converting .docx file:', err);
           setAlertMessage('Failed to read Word document. Make sure the .docx file is valid.');
           setShowAlert(true);
-          setPreview(null);
         }
       } else if (file.type === 'application/pdf') {
-        const decryptedPdfUrl = URL.createObjectURL(blob);
-        setPreview(decryptedPdfUrl);
+        preview = URL.createObjectURL(blob);
       } else if (file.type.startsWith('image/')) {
-        setPreview(URL.createObjectURL(blob));
+        preview = URL.createObjectURL(blob);
       } else {
-        const text = await blob.text();
-        setPreview(text);
+        preview = await blob.text();
       }
+
+      setPreviewedFilePreview(preview);
     } catch (error) {
       console.error('Error previewing file:', error);
       setAlertMessage('Failed to preview file. Please try again.');
       setShowAlert(true);
-      setPreview(null);
+      setPreviewedFilePreview(null);
     }
-  }
+  };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setIsDragOver(true)
-  }
+  };
 
   const handleDragLeave = () => {
     setIsDragOver(false)
-  }
+  };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -125,7 +132,7 @@ const OpenFile = () => {
     setIsDragOver(false);
     if (event.dataTransfer.files && event.dataTransfer.files[0]) {
       const droppedFile = event.dataTransfer.files[0];
-      setFile(droppedFile);
+      setPreviewedFile(droppedFile);
       setAlertMessage('');
       setShowAlert(false);
       handleFilePreview(droppedFile);
@@ -139,7 +146,14 @@ const OpenFile = () => {
     if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') 
       return <FileText className="w-12 h-12 text-blue-700" />
     return <FileIcon className="w-12 h-12 text-gray-500" />
-  }
+  };
+
+  const handleCancelPreview = () => {
+    clearPreviewedFile();
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   return (
     <div className="space-y-4 bg-background text-foreground">
@@ -172,36 +186,47 @@ const OpenFile = () => {
           <span className="mt-1 text-xs text-gray-500">Supported types: .txt, .pdf, .docx, images</span>
         </Button>
       </div>
-      {file && (
+      {previewedFile && (
         <div className="mt-8 border rounded-lg overflow-hidden">
-          <div className="bg-muted p-4 flex items-center space-x-4">
-            {getFileIcon(file.type)}
-            <div>
-              <h3 className="text-lg font-semibold">{file.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {file.type || 'Unknown file type'} - {(file.size / 1024).toFixed(2)} KB
-              </p>
+          <div className="bg-muted p-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {getFileIcon(previewedFile.type)}
+              <div>
+                <h3 className="text-lg font-semibold">{previewedFile.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {previewedFile.type || 'Unknown file type'} - {(previewedFile.size / 1024).toFixed(2)} KB
+                </p>
+              </div>
             </div>
+            <Button
+              onClick={handleCancelPreview}
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close preview</span>
+            </Button>
           </div>
           <div className="p-4">
-            {preview ? (
-              file.type.startsWith('image/') ? (
-                <img src={preview} alt="File preview" className="max-w-full h-auto rounded-md" />
-              ) : file.type === 'application/pdf' ? (
+            {previewedFilePreview ? (
+              previewedFile.type.startsWith('image/') ? (
+                <img src={previewedFilePreview} alt="File preview" className="max-w-full h-auto rounded-md" />
+              ) : previewedFile.type === 'application/pdf' ? (
                 <iframe 
-                  src={preview} 
+                  src={previewedFilePreview} 
                   title="PDF preview" 
                   className="w-full h-[70vh] border-none rounded-md" 
                   style={{ backgroundColor: 'white' }}
                 />
-              ) : file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? (
+              ) : previewedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ? (
                 <div 
                   className="prose prose-sm max-w-full h-[70vh] overflow-auto p-4 bg-white rounded-md [&>*]:w-full [&_p]:w-full [&_h1]:w-full [&_h2]:w-full [&_h3]:w-full"
-                  dangerouslySetInnerHTML={{ __html: preview }} 
+                  dangerouslySetInnerHTML={{ __html: previewedFilePreview }} 
                 />
               ) : (
                 <pre className="whitespace-pre-wrap overflow-auto max-h-[70vh] p-4 bg-muted rounded-md text-sm">
-                  {preview}
+                  {previewedFilePreview}
                 </pre>
               )
             ) : (
@@ -215,7 +240,7 @@ const OpenFile = () => {
       )}
       <AlertMessage showAlert={showAlert} alertMessage={alertMessage} />
     </div>
-  )
-}
+  );
+};
 
 export default OpenFile;
