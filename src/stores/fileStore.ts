@@ -12,6 +12,7 @@ export interface FileState {
   setPreviewedFilePreview: (preview: string | null) => void;
   clearUploadedFile: () => void;
   clearPreviewedFile: () => void;
+  resetState: () => void;
 }
 
 export const useFileStore = create<FileState>()(
@@ -30,6 +31,13 @@ export const useFileStore = create<FileState>()(
       
       clearUploadedFile: () => set({ uploadedFile: null, uploadedFilePreview: null }),
       clearPreviewedFile: () => set({ previewedFile: null, previewedFilePreview: null }),
+
+      resetState: () => set({
+        uploadedFile: null,
+        previewedFile: null,
+        uploadedFilePreview: null,
+        previewedFilePreview: null
+      }),
     }),
     {
       name: 'file-storage',
@@ -37,8 +45,13 @@ export const useFileStore = create<FileState>()(
         uploadedFile: state.uploadedFile,
         previewedFile: state.previewedFile,
         uploadedFilePreview: state.uploadedFilePreview,
-        previewedFilePreview: state.previewedFilePreview
-      })
+        previewedFilePreview: state.previewedFilePreview,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.resetState();
+        }
+      }
     }
   )
 );
