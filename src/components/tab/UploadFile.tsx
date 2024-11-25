@@ -4,13 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, FileIcon, FileText, Image as ImageIcon, X } from "lucide-react";
 import AlertMessage from "@/components/Alert/AlertMessage";
-import { useFileStore } from '@/stores/fileStore'; // Adjust import path as needed
+import { useFileStore } from '@/stores/fileStore';
 
 const UploadFile = () => {
   const { 
     uploadedFile, 
     setUploadedFile, 
-    clearUploadedFile 
+    clearUploadedFile,
+    isFileInvalid,
+    setFileInvalid
   } = useFileStore();
 
   const [showAlert, setShowAlert] = useState(false);
@@ -37,6 +39,7 @@ const UploadFile = () => {
 
     if (event.target.files && event.target.files[0]) {
       setUploadedFile(event.target.files[0]);
+      setFileInvalid(false);
     }
   };
 
@@ -67,6 +70,7 @@ const UploadFile = () => {
 
     if (event.dataTransfer.files && event.dataTransfer.files[0]) {
       setUploadedFile(event.dataTransfer.files[0]);
+      setFileInvalid(false);
     }
   };
   
@@ -81,6 +85,18 @@ const UploadFile = () => {
     }
   
     if (uploadedFile) {
+      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  
+      if (!allowedTypes.includes(uploadedFile.type)) {
+        setAlertMessage("Only PDF and Word files are allowed.");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 10000);
+        setFileInvalid(true);
+        return;
+      }
+  
+      setFileInvalid(false);
+
       const formData = new FormData();
       formData.append('file', uploadedFile);
   
@@ -114,11 +130,16 @@ const UploadFile = () => {
         setShowAlert(true);
         setTimeout(() => setShowAlert(false), 10000);
       }
+    } else {
+      setAlertMessage("No file selected. Please choose a file first.");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 10000);
     }
   };
 
   const handleCancelFile = () => {
     clearUploadedFile();
+    setFileInvalid(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -148,31 +169,35 @@ const UploadFile = () => {
         >
           <Upload className="w-8 h-8 mb-2" />
           <span>Click to upload or drag and drop</span>
-          <span className="mt-1 text-xs text-gray-500">SVG, PNG, JPG or GIF (max. 800x400px)</span>
+          <span className="mt-1 text-xs text-gray-500">WORD & PDF</span>
         </Button>
       </div>
       {uploadedFile && (
-        <div className="mt-4 border rounded-lg overflow-hidden">
-          <div className="bg-muted p-4 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {getFileIcon(uploadedFile.type)}
-              <div>
-                <h3 className="text-lg font-semibold">{uploadedFile.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {uploadedFile.type || 'Unknown file type'} - {(uploadedFile.size / 1024).toFixed(2)} KB
-                </p>
-              </div>
+        <div
+        className={`mt-4 border rounded-lg overflow-hidden ${
+          isFileInvalid ? 'bg-red-100 border-red-500' : 'bg-muted'
+        }`}
+      >
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {getFileIcon(uploadedFile.type)}
+            <div>
+              <h3 className="text-lg font-semibold">{uploadedFile.name}</h3>
+              <p className="text-sm text-muted-foreground">
+                {uploadedFile.type || 'Unknown file type'} - {(uploadedFile.size / 1024).toFixed(2)} KB
+              </p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCancelFile}
-              aria-label="Cancel file selection"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCancelFile}
+            aria-label="Cancel file selection"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
+      </div>
       )}
       <Button className="w-full" disabled={!uploadedFile} onClick={handleUpload}>
         Upload File

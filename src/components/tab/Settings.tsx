@@ -28,7 +28,7 @@ const Settings = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold mb-4">Settings</h2>
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <Label htmlFor="theme">Theme</Label>
         <select id="theme" className="w-full p-2 border rounded-md">
           <option>Light</option>
@@ -44,7 +44,7 @@ const Settings = () => {
           <option>French</option>
           <option>Bahasa Indonesia</option>
         </select>
-      </div>
+      </div> */}
       <div className="space-y-2">
         <Label htmlFor="transparency">Transparency ({transparency}%)</Label>
         <Slider

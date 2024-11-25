@@ -53,17 +53,24 @@ const OpenFile = () => {
   const handleFilePreview = async (file: File) => {
     setAlertMessage('');
     setShowAlert(false);
-    
+  
     const token = sessionStorage.getItem('token');
     if (!token) {
       setAlertMessage('Please log in to access the files.');
       setShowAlert(true);
       return;
     }
-
+  
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      setAlertMessage('Only PDF and Word files are allowed.');
+      setShowAlert(true);
+      return;
+    }
+  
     const formData = new FormData();
     formData.append('file', file);
-
+  
     try {
       const response = await fetch('http://localhost:3001/api/preview', {
         method: 'POST',
@@ -72,14 +79,14 @@ const OpenFile = () => {
         },
         body: formData
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to preview file');
       }
-
+  
       const blob = await response.blob();
       let preview: string | null = null;
-
+  
       if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
         const arrayBuffer = await blob.arrayBuffer();
         try {
@@ -95,12 +102,8 @@ const OpenFile = () => {
         }
       } else if (file.type === 'application/pdf') {
         preview = URL.createObjectURL(blob);
-      } else if (file.type.startsWith('image/')) {
-        preview = URL.createObjectURL(blob);
-      } else {
-        preview = await blob.text();
       }
-
+  
       setPreviewedFilePreview(preview);
     } catch (error) {
       console.error('Error previewing file:', error);
@@ -183,11 +186,17 @@ const OpenFile = () => {
         >
           <FolderOpen className="w-8 h-8 mb-2" />
           <span>Click to open a file or drag and drop</span>
-          <span className="mt-1 text-xs text-gray-500">Supported types: .txt, .pdf, .docx, images</span>
+          <span className="mt-1 text-xs text-gray-500">WORD & PDF</span>
         </Button>
       </div>
       {previewedFile && (
-        <div className="mt-8 border rounded-lg overflow-hidden">
+        <div
+        className={`mt-8 border rounded-lg overflow-hidden ${
+          !['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(previewedFile.type)
+            ? 'bg-red-100 border-red-500'
+            : 'bg-muted border-gray-300'
+        }`}
+      >
           <div className="bg-muted p-4 flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {getFileIcon(previewedFile.type)}
