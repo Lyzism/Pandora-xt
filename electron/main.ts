@@ -1,23 +1,16 @@
-import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron';
-// import { createRequire } from 'node:module'
+import { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, nativeImage } from 'electron';
+import { createServer, Server } from 'http';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
-// const require = createRequire(import.meta.url)
+interface ExtendedApp extends Electron.App {
+  isQuiting?: boolean;
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.mjs
-// │
 process.env.APP_ROOT = path.join(__dirname, '..')
 
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
@@ -25,16 +18,21 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindow | null
+let tray: Tray | null
+let server: Server | null = null;
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    width: 800, //optional
+    height: 600, //optional
+    icon: path.join(process.env.VITE_PUBLIC, 'pandora-icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
-    },
+      nodeIntegration: false,
+      contextIsolation: true
+    }
   })
 
-  // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
@@ -42,26 +40,83 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
-    // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 
-  ipcMain.on('set-transparency', (_, transparency: number) => {
-    if (win) {
-      win.setOpacity(transparency);
+  win.on('close', (event) => {
+    if ((app as ExtendedApp).isQuiting) {
+      return;
     }
+    event.preventDefault();
+    win?.hide();
   });
 
-  // Event tambahan, jika diperlukan
-  ipcMain.handle('get-app-version', () => {
-    return app.getVersion();
+  createTrayIcon();
+}
+
+function createTrayIcon() {
+  const icon = nativeImage.createFromPath(path.join(process.env.VITE_PUBLIC, 'pandora-icon.ico'));
+  
+  tray = new Tray(icon);
+  
+  const contextMenu = Menu.buildFromTemplate([
+    { 
+      label: 'Open Appication', 
+      click: () => {
+        win?.show();
+      } 
+    },
+    { type: 'separator' },
+    { 
+      label: 'Quit', 
+      click: () => {
+        (app as ExtendedApp).isQuiting = true;
+        app.quit();
+      } 
+    }
+  ]);
+
+  tray.setToolTip('Pandora XTS');
+  tray.setContextMenu(contextMenu);
+
+  tray.on('double-click', () => {
+    win?.show();
   });
 }
 
+function startServer() {
+  server = createServer((_, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Server is running');
+  });
+
+  server.listen(3000, () => {
+    console.log('Server started on http://localhost:3000');
+  });
+} 
+
+function stopServer() {
+  if (server) {
+    server.close(() => {
+      console.log('Server stopped');
+    });
+  }
+}
+
+ipcMain.on('set-transparency', (_, transparency: number) => {
+  if (win) {
+    win.setOpacity(transparency / 100);
+  }
+});
+
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
 app.whenReady().then(() => {
   createWindow();
+  startServer();
 
-  // Shortcut global
   globalShortcut.register('Ctrl+=', () => {
     if (win) {
       const currentOpacity = win.getOpacity();
@@ -83,23 +138,33 @@ app.whenReady().then(() => {
       }
     }
   });
+
+  globalShortcut.register('`', () => {
+    if (win?.isVisible()) {
+      win.hide();
+    } else {
+      win?.show();
+    }
+  });
+  
+  globalShortcut.register('Shift+Esc', () => {
+    (app as ExtendedApp).isQuiting = true;
+    stopServer();
+    app.quit();
+  });
 });
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
+  } else {
+    win?.show();
   }
-})
+});
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   globalShortcut.unregisterAll();
   if (process.platform !== 'darwin') {
     app.quit()
-    win = null
   }
-})
+});
