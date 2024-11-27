@@ -118,7 +118,7 @@ app.post('/api/preview', authenticateToken, upload.single('file'), (req, res) =>
 });
 
 
-// Protected route yang membutuhkan autentikasi
+// Protected route need for requires authentication
 app.get('/api/protected', authenticateToken, (req, res) => {
   res.status(200).json({ message: 'This is a protected route', user: req.user });
 });

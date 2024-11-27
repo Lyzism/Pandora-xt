@@ -3,17 +3,17 @@ import { create } from 'zustand';
 interface TransparencyState {
   transparency: number;
   setTransparency: (value: number) => void;
-  resetState: () => void; // Tambahkan fungsi reset
+  resetState: () => void;
 }
 
 export const useTransparencyStore = create<TransparencyState>((set) => ({
-  transparency: 100, // Default transparency
+  transparency: 100,
   setTransparency: (value: number) => {
-    const newValue = Math.max(1, Math.min(100, value)); // Batas nilai antara 1 dan 100
+    const newValue = Math.max(1, Math.min(100, value)); 
     set({ transparency: newValue });
-    window.electronAPI.send("set-transparency", newValue / 100); // Kirim nilai ke Electron
+    window.electronAPI.send("set-transparency", newValue / 100);
   },
   resetState: () => {
-    set({ transparency: 100 }); // Reset ke nilai default
+    set({ transparency: 100 });
   },
 }));

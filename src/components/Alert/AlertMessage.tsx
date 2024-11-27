@@ -19,6 +19,8 @@ const AlertMessage: React.FC<AlertMessageProps> = ({ showAlert, alertMessage }) 
       return "Error";
     } else if (alertMessage.includes("Invalid")) {
       return "Login Failed";
+    } else if (alertMessage.includes("Only PDF")) {
+      return "Upload Denied";
     } else if (alertMessage.includes("Server error")) {
       return "Server Busy";
     }

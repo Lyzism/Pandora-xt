@@ -119,9 +119,9 @@ const UploadFile = () => {
           link.click();
           document.body.removeChild(link);
   
-          setAlertMessage("File uploaded and encrypted successfully!");
+          setAlertMessage("File uploaded successfully!");
         } else {
-          setAlertMessage("Failed to upload and encrypt file. Please try again.");
+          setAlertMessage("Failed to upload. Please try again.");
         }
       } catch (error) {
         console.error("Error uploading file:", error);

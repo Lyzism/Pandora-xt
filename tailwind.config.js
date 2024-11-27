@@ -2,7 +2,7 @@
 export default {
     darkMode: ["class"],
     content: [
-    "./src/**/*.{js,jsx,ts,tsx}", // Sesuaikan dengan struktur folder Anda
+    "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
   	extend: {
