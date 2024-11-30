@@ -1,5 +1,5 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, nativeImage } from 'electron';
-import { createServer, Server } from 'http';
+import { fork } from 'child_process';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -19,7 +19,37 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindow | null
 let tray: Tray | null
-let server: Server | null = null;
+let serverProcess: ReturnType<typeof fork> | null = null;
+
+function startServer() {
+  const serverPath = path.join(app.getAppPath(), 'server', 'server.js'); // Lokasi absolut ke server.js
+  console.log('Starting server from:', serverPath);
+
+  serverProcess = fork(serverPath, [], {
+    cwd: path.dirname(serverPath), // Pastikan proses berjalan di folder server.js
+    env: {
+      ...process.env,
+      NODE_ENV: 'production', // Mode produksi
+    },
+  });
+
+  serverProcess.on('error', (err) => {
+    console.error('Failed to start server process:', err.message);
+  });
+
+  serverProcess.on('close', (code) => {
+    console.log(`Server process exited with code ${code}`);
+  });
+}
+
+// Fungsi untuk menghentikan server backend
+function stopServer() {
+  if (serverProcess) {
+    serverProcess.kill();
+    console.log('Server process stopped.');
+    serverProcess = null;
+  }
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -84,25 +114,6 @@ function createTrayIcon() {
   });
 }
 
-function startServer() {
-  server = createServer((_, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Server is running');
-  });
-
-  server.listen(3000, () => {
-    console.log('Server started on http://localhost:3000');
-  });
-} 
-
-function stopServer() {
-  if (server) {
-    server.close(() => {
-      console.log('Server stopped');
-    });
-  }
-}
-
 ipcMain.on('set-transparency', (_, transparency: number) => {
   if (win) {
     win.setOpacity(transparency / 100);
@@ -164,6 +175,7 @@ app.on('activate', () => {
 
 app.on('window-all-closed', () => {
   globalShortcut.unregisterAll();
+  stopServer();
   if (process.platform !== 'darwin') {
     app.quit()
   }
