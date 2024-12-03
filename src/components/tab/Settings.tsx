@@ -8,18 +8,19 @@ const Settings = () => {
   const { transparency, setTransparency } = useTransparencyStore();
 
   const handleTransparencyChange = (value: number[]) => {
-    setTransparency(value[0]);
+    const roundedValue = Math.round(value[0]);
+    setTransparency(roundedValue, true);
   };
-
+  
   useEffect(() => {
     const updateTransparency = (newTransparency: unknown) => {
       if (typeof newTransparency === "number") {
-        setTransparency(Math.round(newTransparency));
+        setTransparency(Math.round(newTransparency), false);
       }
     };
-
+  
     window.electronAPI.receive("update-transparency", updateTransparency);
-
+  
     return () => {
       window.electronAPI.receive("update-transparency", () => {});
     };

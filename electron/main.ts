@@ -127,7 +127,9 @@ function createTrayIcon() {
 
 ipcMain.on('set-transparency', (_, transparency: number) => {
   if (win) {
-    win.setOpacity(transparency / 100);
+    const newOpacity = Math.round(transparency * 100) / 100;
+    win.setOpacity(newOpacity);
+    win.webContents.send('update-transparency', Math.round(newOpacity * 100));
   }
 });
 
@@ -145,18 +147,18 @@ app.whenReady().then(() => {
       if (currentOpacity < 1) {
         const newOpacity = Math.min(currentOpacity + 0.1, 1);
         win.setOpacity(newOpacity);
-        win.webContents.send('update-transparency', newOpacity * 100);
+        win.webContents.send('update-transparency', Math.round(newOpacity * 100));
       }
     }
   });
-
+  
   globalShortcut.register('Ctrl+-', () => {
     if (win) {
       const currentOpacity = win.getOpacity();
       if (currentOpacity > 0.1) {
         const newOpacity = Math.max(currentOpacity - 0.1, 0.1);
         win.setOpacity(newOpacity);
-        win.webContents.send('update-transparency', newOpacity * 100);
+        win.webContents.send('update-transparency', Math.round(newOpacity * 100));
       }
     }
   });
