@@ -1,5 +1,5 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, nativeImage } from 'electron';
-import { fork } from 'child_process';
+import { spawn } from 'child_process';
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -19,30 +19,41 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindow | null
 let tray: Tray | null
-let serverProcess: ReturnType<typeof fork> | null = null;
+let serverProcess: ReturnType<typeof spawn> | null = null;
 
 function startServer() {
-  const serverPath = path.join(app.getAppPath(), 'server', 'server.js'); // Lokasi absolut ke server.js
-  console.log('Starting server from:', serverPath);
+  const serverExecutable = path.join(process.resourcesPath, 'server', 'server.exe');
+  console.log('Starting server from:', serverExecutable);
 
-  serverProcess = fork(serverPath, [], {
-    cwd: path.dirname(serverPath), // Pastikan proses berjalan di folder server.js
+  serverProcess = spawn(serverExecutable, [], {
+    cwd: path.dirname(serverExecutable),
     env: {
       ...process.env,
-      NODE_ENV: 'production', // Mode produksi
+      NODE_ENV: 'production',
     },
   });
 
-  serverProcess.on('error', (err) => {
-    console.error('Failed to start server process:', err.message);
+  if (serverProcess?.stdout) {
+    serverProcess.stdout.on('data', (data: Buffer) => {
+      console.log(`Server output: ${data.toString()}`);
+    });
+  }
+
+  if (serverProcess?.stderr) {
+    serverProcess.stderr.on('data', (data: Buffer) => {
+      console.error(`Server error: ${data.toString()}`);
+    });
+  }
+
+  serverProcess.on('close', (code: number) => {
+    console.log(`Server exited with code ${code}`);
   });
 
-  serverProcess.on('close', (code) => {
-    console.log(`Server process exited with code ${code}`);
+  serverProcess.on('error', (err: Error) => {
+    console.error('Failed to start server process:', err.message);
   });
 }
 
-// Fungsi untuk menghentikan server backend
 function stopServer() {
   if (serverProcess) {
     serverProcess.kill();

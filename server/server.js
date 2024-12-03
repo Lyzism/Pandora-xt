@@ -1,3 +1,7 @@
+//SETUP SERVER 
+//IMPORT TO BE PKG
+// pkg server.js --targets node14-win-x64 --output server.exe 
+
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
@@ -5,6 +9,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); 
 const crypto = require('crypto');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
@@ -25,10 +30,36 @@ if (!encryptionKey || !iv) {
 app.use(cors());
 app.use(express.json());
 
-// Database setup
-const db = new sqlite3.Database(path.join(__dirname, 'database.sqlite'), (err) => {
-  if (err) console.error('Database connection error:', err.message);
-  else console.log('Connected to SQLite database');
+const sqlite3BindingPath = path.join(__dirname, 'node_sqlite3.node');
+process.env.NODE_SQLITE3_BINARY_PATH = sqlite3BindingPath;
+console.log('Using SQLite3 binding from:', sqlite3BindingPath);
+
+const dbPath = path.join(__dirname, 'database.sqlite');
+console.log('Database path:', dbPath);
+
+fs.access(dbPath, fs.constants.F_OK, (err) => {
+  if (err) {
+    console.error('Database file does not exist:', err.message);
+  } else {
+    console.log('Database file exists at:', dbPath);
+  }
+});
+
+const originalDbPath = path.join(__dirname, 'database.sqlite');
+const tempDbPath = path.join(process.cwd(), 'database.sqlite');
+
+if (!fs.existsSync(tempDbPath)) {
+  console.log(`Copying database from ${originalDbPath} to ${tempDbPath}`);
+  fs.copyFileSync(originalDbPath, tempDbPath);
+}
+console.log('Using temporary database path:', tempDbPath);
+
+const db = new sqlite3.Database(tempDbPath, (err) => {
+  if (err) {
+    console.error('Database connection error:', err.message);
+  } else {
+    console.log('Connected to SQLite database');
+  }
 });
 
 const encryptFile = (buffer) => {

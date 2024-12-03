@@ -1,15 +1,33 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "Pandora",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "Pandora",
   "directories": {
     "output": "release/${version}"
   },
   "files": [
     "dist",
     "dist-electron"
+  ],
+  "extraResources": [
+    {
+      "from": "./server/server.exe",
+      "to": "server/server.exe"
+    },
+    {
+      "from": "./server/.env",
+      "to": "server/.env"
+    },
+    {
+      "from": "./server/database.sqlite",
+      "to": "server/database.sqlite"
+    },
+    {
+      "from": "./server/node_sqlite3.node",
+      "to": "server/node_sqlite3.node"
+    }
   ],
   "mac": {
     "target": [

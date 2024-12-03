@@ -1,5 +1,5 @@
 import { ipcMain, app, globalShortcut, BrowserWindow, nativeImage, Tray, Menu } from "electron";
-import { createServer } from "http";
+import { spawn } from "child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -10,7 +10,41 @@ const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
 let win;
 let tray;
-let server = null;
+let serverProcess = null;
+function startServer() {
+  const serverExecutable = path.join(process.resourcesPath, "server", "server.exe");
+  console.log("Starting server from:", serverExecutable);
+  serverProcess = spawn(serverExecutable, [], {
+    cwd: path.dirname(serverExecutable),
+    env: {
+      ...process.env,
+      NODE_ENV: "production"
+    }
+  });
+  if (serverProcess == null ? void 0 : serverProcess.stdout) {
+    serverProcess.stdout.on("data", (data) => {
+      console.log(`Server output: ${data.toString()}`);
+    });
+  }
+  if (serverProcess == null ? void 0 : serverProcess.stderr) {
+    serverProcess.stderr.on("data", (data) => {
+      console.error(`Server error: ${data.toString()}`);
+    });
+  }
+  serverProcess.on("close", (code) => {
+    console.log(`Server exited with code ${code}`);
+  });
+  serverProcess.on("error", (err) => {
+    console.error("Failed to start server process:", err.message);
+  });
+}
+function stopServer() {
+  if (serverProcess) {
+    serverProcess.kill();
+    console.log("Server process stopped.");
+    serverProcess = null;
+  }
+}
 function createWindow() {
   win = new BrowserWindow({
     width: 800,
@@ -66,22 +100,6 @@ function createTrayIcon() {
     win == null ? void 0 : win.show();
   });
 }
-function startServer() {
-  server = createServer((_, res) => {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end("Server is running");
-  });
-  server.listen(3e3, () => {
-    console.log("Server started on http://localhost:3000");
-  });
-}
-function stopServer() {
-  if (server) {
-    server.close(() => {
-      console.log("Server stopped");
-    });
-  }
-}
 ipcMain.on("set-transparency", (_, transparency) => {
   if (win) {
     win.setOpacity(transparency / 100);
@@ -135,6 +153,7 @@ app.on("activate", () => {
 });
 app.on("window-all-closed", () => {
   globalShortcut.unregisterAll();
+  stopServer();
   if (process.platform !== "darwin") {
     app.quit();
   }
